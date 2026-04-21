@@ -1,13 +1,20 @@
 import { Controller, Get, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { PaymentTransactionService } from './payment-transaction.service';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiExcludeController,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { RolesGuard } from '../../../common/guard/role/roles.guard';
 import { JwtAuthGuard } from '../../../modules/auth/guards/jwt-auth.guard';
 import { Role } from '../../../common/guard/role/role.enum';
 import { Roles } from '../../../common/guard/role/roles.decorator';
 import { Request } from 'express';
+import { SWAGGER_AUTH } from 'src/common/swagger/swagger';
 
-@ApiBearerAuth()
+@ApiExcludeController()
+@ApiBearerAuth(SWAGGER_AUTH.admin)
 @ApiTags('Payment transaction')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.ADMIN)

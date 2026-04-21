@@ -7,6 +7,7 @@ import {
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
+import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AppService } from './app.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as multer from 'multer';
@@ -15,6 +16,7 @@ import { join } from 'path';
 import { Response } from 'express';
 import { Readable } from 'stream';
 
+@ApiTags('Test')
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
@@ -60,19 +62,32 @@ export class AppController {
     });
   }
 
-  @Post('test-file-upload')
-  @UseInterceptors(
-    FileInterceptor('image', { storage: multer.memoryStorage() as any }),
-  )
-  async test(@UploadedFile() image?: Express.Multer.File) {
-    try {
-      const result = await this.appService.test(image);
-      return result;
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
-  }
+  // @Post('test-file-upload')
+  // @ApiOperation({ summary: 'Test file upload' })
+  // @ApiConsumes('multipart/form-data')
+  // @ApiBody({
+  //   schema: {
+  //     type: 'object',
+  //     properties: {
+  //       image: {
+  //         type: 'string',
+  //         format: 'binary',
+  //       },
+  //     },
+  //   },
+  // })
+  // @UseInterceptors(
+  //   FileInterceptor('image', { storage: multer.memoryStorage() as any }),
+  // )
+  // async test(@UploadedFile() image?: Express.Multer.File) {
+  //   try {
+  //     const result = await this.appService.test(image);
+  //     return result;
+  //   } catch (error) {
+  //     return {
+  //       success: false,
+  //       message: error.message,
+  //     };
+  //   }
+  // }
 }

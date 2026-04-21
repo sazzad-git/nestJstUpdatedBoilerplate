@@ -4,6 +4,10 @@ import { IsOptional } from 'class-validator';
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsOptional()
+  @ApiProperty({ type: 'string', format: 'binary', required: false })
+  image?: any;
+
+  @IsOptional()
   @ApiProperty({
     description: 'Country',
     example: 'Nigeria',

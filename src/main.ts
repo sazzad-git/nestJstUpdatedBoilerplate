@@ -11,6 +11,7 @@ import { AppModule } from './app.module';
 import appConfig from './config/app.config';
 import { CustomExceptionFilter } from './common/exception/custom-exception.filter';
 import { SojebStorage } from './common/lib/Disk/SojebStorage';
+import { buildSwaggerOptions } from './common/swagger/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -31,11 +32,16 @@ async function bootstrap() {
   //   }
   //   next();
   // });
-  app.useStaticAssets(join(__dirname, '..', 'public'), {
+  console.log('Static assets path (public):', join(process.cwd(), 'public'));
+  console.log(
+    'Static assets path (storage):',
+    join(process.cwd(), 'public/storage'),
+  );
+  app.useStaticAssets(join(process.cwd(), 'public'), {
     index: false,
     prefix: '/public',
   });
-  app.useStaticAssets(join(__dirname, '..', 'public/storage'), {
+  app.useStaticAssets(join(process.cwd(), 'public/storage'), {
     index: false,
     prefix: '/storage',
   });
@@ -68,15 +74,14 @@ async function bootstrap() {
   });
 
   // swagger
-  const options = new DocumentBuilder()
-    .setTitle(`${process.env.APP_NAME} api`)
-    .setDescription(`${process.env.APP_NAME} api docs`)
-    .setVersion('1.0')
-    .addTag(`${process.env.APP_NAME}`)
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, options);
-  SwaggerModule.setup('api/docs', app, document);
+  const document = SwaggerModule.createDocument(app, buildSwaggerOptions());
+
+  // SwaggerModule.setup('api/docs', app, document, swaggerUiOptions);
+  SwaggerModule.setup('api/docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+  });
   // end swagger
 
   await app.listen(process.env.PORT ?? 4000, '0.0.0.0');

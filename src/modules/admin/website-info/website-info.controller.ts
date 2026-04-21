@@ -11,7 +11,11 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { memoryStorage } from 'multer';
-import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiExcludeController,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { ApiTags } from '@nestjs/swagger';
 import { WebsiteInfoService } from './website-info.service';
 import { CreateWebsiteInfoDto } from './dto/create-website-info.dto';
@@ -20,8 +24,10 @@ import { Roles } from '../../../common/guard/role/roles.decorator';
 import { RolesGuard } from '../../../common/guard/role/roles.guard';
 import { JwtAuthGuard } from '../../../modules/auth/guards/jwt-auth.guard';
 import { Role } from '../../../common/guard/role/role.enum';
+import { SWAGGER_AUTH } from 'src/common/swagger/swagger';
 
-@ApiBearerAuth()
+@ApiExcludeController()
+@ApiBearerAuth(SWAGGER_AUTH.admin)
 @ApiTags('Website Info')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.ADMIN)

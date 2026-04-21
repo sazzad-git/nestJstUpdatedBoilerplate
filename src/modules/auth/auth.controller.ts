@@ -12,7 +12,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { memoryStorage } from 'multer';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -24,6 +24,16 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import appConfig from '../../config/app.config';
 import { AuthGuard } from '@nestjs/passport';
+import { SWAGGER_AUTH } from 'src/common/swagger/swagger';
+import { handleError } from '../../common/helper/error-handler.helper';
+import {
+  ChangePasswordDto,
+  ForgotPasswordDto,
+  LoginDto,
+  RefreshTokenDto,
+  ResendVerificationEmailDto,
+  ResetPasswordDto,
+} from './dto/auth.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -31,7 +41,7 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @ApiOperation({ summary: 'Get user details' })
-  @ApiBearerAuth()
+  @ApiBearerAuth(SWAGGER_AUTH.user)
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async me(@Req() req: Request) {
@@ -42,10 +52,7 @@ export class AuthController {
 
       return response;
     } catch (error) {
-      return {
-        success: false,
-        message: 'Failed to fetch user details',
-      };
+      return handleError(error);
     }
   }
 
@@ -96,15 +103,13 @@ export class AuthController {
 
       return response;
     } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
+      return handleError(error);
     }
   }
 
   // login user
   @ApiOperation({ summary: 'Login user' })
+  @ApiBody({ type: LoginDto })
   @UseGuards(LocalAuthGuard)
   @Post('login')
   async login(@Req() req: Request, @Res() res: Response) {
@@ -127,20 +132,17 @@ export class AuthController {
 
       res.json(response);
     } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
+      return handleError(error);
     }
   }
 
   @ApiOperation({ summary: 'Refresh token' })
-  @ApiBearerAuth()
+  @ApiBearerAuth(SWAGGER_AUTH.user)
   @UseGuards(JwtAuthGuard)
   @Post('refresh-token')
   async refreshToken(
     @Req() req: Request,
-    @Body() body: { refresh_token: string },
+    @Body() body: RefreshTokenDto,
   ) {
     try {
       const user_id = req.user.userId;
@@ -152,14 +154,11 @@ export class AuthController {
 
       return response;
     } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
+      return handleError(error);
     }
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth(SWAGGER_AUTH.user)
   @UseGuards(JwtAuthGuard)
   @Post('logout')
   async logout(@Req() req: Request) {
@@ -168,46 +167,33 @@ export class AuthController {
       const response = await this.authService.revokeRefreshToken(userId);
       return response;
     } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
+      return handleError(error);
     }
   }
 
-  @Get('google')
-  @UseGuards(AuthGuard('google'))
-  async googleLogin(): Promise<any> {
-    return HttpStatus.OK;
-  }
+  // @Get('google')
+  // @UseGuards(AuthGuard('google'))
+  // async googleLogin(): Promise<any> {
+  //   return HttpStatus.OK;
+  // }
 
-  @Get('google/redirect')
-  @UseGuards(AuthGuard('google'))
-  async googleLoginRedirect(@Req() req: Request): Promise<any> {
-    return {
-      statusCode: HttpStatus.OK,
-      data: req.user,
-    };
-  }
+  // @Get('google/redirect')
+  // @UseGuards(AuthGuard('google'))
+  // async googleLoginRedirect(@Req() req: Request): Promise<any> {
+  //   return {
+  //     statusCode: HttpStatus.OK,
+  //     data: req.user,
+  //   };
+  // }
 
   // update user
   @ApiOperation({ summary: 'Update user' })
-  @ApiBearerAuth()
+  @ApiBearerAuth(SWAGGER_AUTH.user)
+  @ApiConsumes('multipart/form-data')
   @UseGuards(JwtAuthGuard)
   @Patch('update')
   @UseInterceptors(
     FileInterceptor('image', {
-      // storage: diskStorage({
-      //   destination:
-      //     appConfig().storageUrl.rootUrl + appConfig().storageUrl.avatar,
-      //   filename: (req, file, cb) => {
-      //     const randomName = Array(32)
-      //       .fill(null)
-      //       .map(() => Math.round(Math.random() * 16).toString(16))
-      //       .join('');
-      //     return cb(null, `${randomName}${file.originalname}`);
-      //   },
-      // }),
       storage: memoryStorage(),
     }),
   )
@@ -221,10 +207,7 @@ export class AuthController {
       const response = await this.authService.updateUser(user_id, data, image);
       return response;
     } catch (error) {
-      return {
-        success: false,
-        message: 'Failed to update user',
-      };
+      return handleError(error);
     }
   }
 
@@ -232,7 +215,7 @@ export class AuthController {
 
   @ApiOperation({ summary: 'Forgot password' })
   @Post('forgot-password')
-  async forgotPassword(@Body() data: { email: string }) {
+  async forgotPassword(@Body() data: ForgotPasswordDto) {
     try {
       const email = data.email;
       if (!email) {
@@ -275,7 +258,7 @@ export class AuthController {
   // resend verification email to verify the email
   @ApiOperation({ summary: 'Resend verification email' })
   @Post('resend-verification-email')
-  async resendVerificationEmail(@Body() data: { email: string }) {
+  async resendVerificationEmail(@Body() data: ResendVerificationEmailDto) {
     try {
       const email = data.email;
       if (!email) {
@@ -294,7 +277,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Reset password' })
   @Post('reset-password')
   async resetPassword(
-    @Body() data: { email: string; token: string; password: string },
+    @Body() data: ResetPasswordDto,
   ) {
     try {
       const email = data.email;
@@ -327,12 +310,12 @@ export class AuthController {
 
   // change password if user want to change the password
   @ApiOperation({ summary: 'Change password' })
-  @ApiBearerAuth()
+  @ApiBearerAuth(SWAGGER_AUTH.user)
   @UseGuards(JwtAuthGuard)
   @Post('change-password')
   async changePassword(
     @Req() req: Request,
-    @Body() data: { email: string; old_password: string; new_password: string },
+    @Body() data: ChangePasswordDto,
   ) {
     try {
       // const email = data.email;
@@ -372,126 +355,126 @@ export class AuthController {
   // --------------end change password---------
 
   // -------change email address------
-  @ApiOperation({ summary: 'request email change' })
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Post('request-email-change')
-  async requestEmailChange(
-    @Req() req: Request,
-    @Body() data: { email: string },
-  ) {
-    try {
-      const user_id = req.user.userId;
-      const email = data.email;
-      if (!email) {
-        throw new HttpException('Email not provided', HttpStatus.UNAUTHORIZED);
-      }
-      return await this.authService.requestEmailChange(user_id, email);
-    } catch (error) {
-      return {
-        success: false,
-        message: 'Something went wrong',
-      };
-    }
-  }
+  // @ApiOperation({ summary: 'request email change' })
+  // @ApiBearerAuth()
+  // @UseGuards(JwtAuthGuard)
+  // @Post('request-email-change')
+  // async requestEmailChange(
+  //   @Req() req: Request,
+  //   @Body() data: { email: string },
+  // ) {
+  //   try {
+  //     const user_id = req.user.userId;
+  //     const email = data.email;
+  //     if (!email) {
+  //       throw new HttpException('Email not provided', HttpStatus.UNAUTHORIZED);
+  //     }
+  //     return await this.authService.requestEmailChange(user_id, email);
+  //   } catch (error) {
+  //     return {
+  //       success: false,
+  //       message: 'Something went wrong',
+  //     };
+  //   }
+  // }
 
-  @ApiOperation({ summary: 'Change email address' })
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Post('change-email')
-  async changeEmail(
-    @Req() req: Request,
-    @Body() data: { email: string; token: string },
-  ) {
-    try {
-      const user_id = req.user.userId;
-      const email = data.email;
+  // @ApiOperation({ summary: 'Change email address' })
+  // @ApiBearerAuth()
+  // @UseGuards(JwtAuthGuard)
+  // @Post('change-email')
+  // async changeEmail(
+  //   @Req() req: Request,
+  //   @Body() data: { email: string; token: string },
+  // ) {
+  //   try {
+  //     const user_id = req.user.userId;
+  //     const email = data.email;
 
-      const token = data.token;
-      if (!email) {
-        throw new HttpException('Email not provided', HttpStatus.UNAUTHORIZED);
-      }
-      if (!token) {
-        throw new HttpException('Token not provided', HttpStatus.UNAUTHORIZED);
-      }
-      return await this.authService.changeEmail({
-        user_id: user_id,
-        new_email: email,
-        token: token,
-      });
-    } catch (error) {
-      return {
-        success: false,
-        message: 'Something went wrong',
-      };
-    }
-  }
+  //     const token = data.token;
+  //     if (!email) {
+  //       throw new HttpException('Email not provided', HttpStatus.UNAUTHORIZED);
+  //     }
+  //     if (!token) {
+  //       throw new HttpException('Token not provided', HttpStatus.UNAUTHORIZED);
+  //     }
+  //     return await this.authService.changeEmail({
+  //       user_id: user_id,
+  //       new_email: email,
+  //       token: token,
+  //     });
+  //   } catch (error) {
+  //     return {
+  //       success: false,
+  //       message: 'Something went wrong',
+  //     };
+  //   }
+  // }
   // -------end change email address------
 
   // --------- 2FA ---------
-  @ApiOperation({ summary: 'Generate 2FA secret' })
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Post('generate-2fa-secret')
-  async generate2FASecret(@Req() req: Request) {
-    try {
-      const user_id = req.user.userId;
-      return await this.authService.generate2FASecret(user_id);
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
-  }
+  // @ApiOperation({ summary: 'Generate 2FA secret' })
+  // @ApiBearerAuth()
+  // @UseGuards(JwtAuthGuard)
+  // @Post('generate-2fa-secret')
+  // async generate2FASecret(@Req() req: Request) {
+  //   try {
+  //     const user_id = req.user.userId;
+  //     return await this.authService.generate2FASecret(user_id);
+  //   } catch (error) {
+  //     return {
+  //       success: false,
+  //       message: error.message,
+  //     };
+  //   }
+  // }
 
-  @ApiOperation({ summary: 'Verify 2FA' })
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Post('verify-2fa')
-  async verify2FA(@Req() req: Request, @Body() data: { token: string }) {
-    try {
-      const user_id = req.user.userId;
-      const token = data.token;
-      return await this.authService.verify2FA(user_id, token);
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
-  }
+  // @ApiOperation({ summary: 'Verify 2FA' })
+  // @ApiBearerAuth()
+  // @UseGuards(JwtAuthGuard)
+  // @Post('verify-2fa')
+  // async verify2FA(@Req() req: Request, @Body() data: { token: string }) {
+  //   try {
+  //     const user_id = req.user.userId;
+  //     const token = data.token;
+  //     return await this.authService.verify2FA(user_id, token);
+  //   } catch (error) {
+  //     return {
+  //       success: false,
+  //       message: error.message,
+  //     };
+  //   }
+  // }
 
-  @ApiOperation({ summary: 'Enable 2FA' })
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Post('enable-2fa')
-  async enable2FA(@Req() req: Request) {
-    try {
-      const user_id = req.user.userId;
-      return await this.authService.enable2FA(user_id);
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
-  }
+  // @ApiOperation({ summary: 'Enable 2FA' })
+  // @ApiBearerAuth()
+  // @UseGuards(JwtAuthGuard)
+  // @Post('enable-2fa')
+  // async enable2FA(@Req() req: Request) {
+  //   try {
+  //     const user_id = req.user.userId;
+  //     return await this.authService.enable2FA(user_id);
+  //   } catch (error) {
+  //     return {
+  //       success: false,
+  //       message: error.message,
+  //     };
+  //   }
+  // }
 
-  @ApiOperation({ summary: 'Disable 2FA' })
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Post('disable-2fa')
-  async disable2FA(@Req() req: Request) {
-    try {
-      const user_id = req.user.userId;
-      return await this.authService.disable2FA(user_id);
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
-  }
+  // @ApiOperation({ summary: 'Disable 2FA' })
+  // @ApiBearerAuth()
+  // @UseGuards(JwtAuthGuard)
+  // @Post('disable-2fa')
+  // async disable2FA(@Req() req: Request) {
+  //   try {
+  //     const user_id = req.user.userId;
+  //     return await this.authService.disable2FA(user_id);
+  //   } catch (error) {
+  //     return {
+  //       success: false,
+  //       message: error.message,
+  //     };
+  //   }
+  // }
   // --------- end 2FA ---------
 }

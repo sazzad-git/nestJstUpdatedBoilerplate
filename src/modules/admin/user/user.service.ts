@@ -152,7 +152,7 @@ export class UserService {
       }
       await this.prisma.user.update({
         where: { id: id },
-        data: { approved_at: DateHelper.now() },
+        data: { approved_at: DateHelper.now(), approval_status: 'approved' },
       });
       return {
         success: true,
@@ -179,7 +179,7 @@ export class UserService {
       }
       await this.prisma.user.update({
         where: { id: id },
-        data: { approved_at: null },
+        data: { approved_at: DateHelper.now(), approval_status: 'rejected' },
       });
       return {
         success: true,
