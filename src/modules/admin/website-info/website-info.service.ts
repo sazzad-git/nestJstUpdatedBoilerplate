@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { CreateWebsiteInfoDto } from './dto/create-website-info.dto';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { SojebStorage } from '../../../common/lib/Disk/SojebStorage';
+import { SazzadStorage } from '../../../common/lib/Disk/SazzadStorage';
 import appConfig from '../../../config/app.config';
 import { StringHelper } from '../../../common/helper/string.helper';
 
 @Injectable()
 export class WebsiteInfoService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(
     createWebsiteInfoDto: CreateWebsiteInfoDto,
@@ -40,13 +40,13 @@ export class WebsiteInfoService {
         // delete old logo from storage
         const logo = await this.prisma.websiteInfo.findFirst();
         if (logo) {
-          await SojebStorage.delete(
+          await SazzadStorage.delete(
             appConfig().storageUrl.websiteInfo + logo.logo,
           );
         }
         // upload file
         const fileName = `${StringHelper.randomString()}${files.logo.originalname}`;
-        await SojebStorage.put(
+        await SazzadStorage.put(
           appConfig().storageUrl.websiteInfo + fileName,
           files.logo.buffer,
         );
@@ -56,13 +56,13 @@ export class WebsiteInfoService {
         // delete old favicon from storage
         const favicon = await this.prisma.websiteInfo.findFirst();
         if (favicon) {
-          await SojebStorage.delete(
+          await SazzadStorage.delete(
             appConfig().storageUrl.websiteInfo + favicon.favicon,
           );
         }
         // upload file
         const fileName = `${StringHelper.randomString()}${files.favicon.originalname}`;
-        await SojebStorage.put(
+        await SazzadStorage.put(
           appConfig().storageUrl.websiteInfo + fileName,
           files.favicon.buffer,
         );
@@ -133,13 +133,13 @@ export class WebsiteInfoService {
       });
 
       if (websiteInfo.logo) {
-        websiteInfo['logo_url'] = SojebStorage.url(
+        websiteInfo['logo_url'] = SazzadStorage.url(
           appConfig().storageUrl.websiteInfo + websiteInfo.logo,
         );
       }
 
       if (websiteInfo.favicon) {
-        websiteInfo['favicon_url'] = SojebStorage.url(
+        websiteInfo['favicon_url'] = SazzadStorage.url(
           appConfig().storageUrl.websiteInfo + websiteInfo.favicon,
         );
       }

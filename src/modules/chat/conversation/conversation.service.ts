@@ -3,7 +3,7 @@ import { CreateConversationDto } from './dto/create-conversation.dto';
 import { UpdateConversationDto } from './dto/update-conversation.dto';
 import { PrismaService } from '../../../prisma/prisma.service';
 import appConfig from '../../../config/app.config';
-import { SojebStorage } from '../../../common/lib/Disk/SojebStorage';
+import { SazzadStorage } from '../../../common/lib/Disk/SazzadStorage';
 import { DateHelper } from '../../../common/helper/date.helper';
 import { MessageGateway } from '../message/message.gateway';
 
@@ -12,7 +12,7 @@ export class ConversationService {
   constructor(
     private prisma: PrismaService,
     private readonly messageGateway: MessageGateway,
-  ) {}
+  ) { }
 
   async create(createConversationDto: CreateConversationDto) {
     try {
@@ -113,12 +113,12 @@ export class ConversationService {
 
       // add image url
       if (conversation.creator.avatar) {
-        conversation.creator['avatar_url'] = SojebStorage.url(
+        conversation.creator['avatar_url'] = SazzadStorage.url(
           appConfig().storageUrl.avatar + conversation.creator.avatar,
         );
       }
       if (conversation.participant.avatar) {
-        conversation.participant['avatar_url'] = SojebStorage.url(
+        conversation.participant['avatar_url'] = SazzadStorage.url(
           appConfig().storageUrl.avatar + conversation.participant.avatar,
         );
       }
@@ -189,12 +189,12 @@ export class ConversationService {
       // add image url
       for (const conversation of conversations) {
         if (conversation.creator.avatar) {
-          conversation.creator['avatar_url'] = SojebStorage.url(
+          conversation.creator['avatar_url'] = SazzadStorage.url(
             appConfig().storageUrl.avatar + conversation.creator.avatar,
           );
         }
         if (conversation.participant.avatar) {
-          conversation.participant['avatar_url'] = SojebStorage.url(
+          conversation.participant['avatar_url'] = SazzadStorage.url(
             appConfig().storageUrl.avatar + conversation.participant.avatar,
           );
         }
@@ -241,7 +241,7 @@ export class ConversationService {
 
       // add image url
       if (conversation.creator.avatar) {
-        conversation.creator['avatar_url'] = SojebStorage.url(
+        conversation.creator['avatar_url'] = SazzadStorage.url(
           appConfig().storageUrl.avatar + conversation.creator.avatar,
         );
       }

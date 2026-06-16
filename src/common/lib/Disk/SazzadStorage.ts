@@ -5,11 +5,11 @@ import { S3Adapter } from './drivers/S3Adapter';
 import { IStorage } from './drivers/iStorage';
 
 /**
- * SojebStorage for handling storage (local storage, aws s3 storage)
- * @class SojebStorage
- * @author Sojeb Sikder <sojebsikder@gmail.com>
+ * SazzadStorage for handling storage (local storage, aws s3 storage)
+ * @class SazzadStorage
+ * @author Sazzadur Rahman <[EMAIL_ADDRESS]>
  */
-export class SojebStorage {
+export class SazzadStorage {
   private static _config: DiskOption;
 
   /**

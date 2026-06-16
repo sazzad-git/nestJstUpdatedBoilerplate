@@ -11,7 +11,7 @@ import { UserRepository } from '../../common/repository/user/user.repository';
 import { UcodeRepository } from '../../common/repository/ucode/ucode.repository';
 import { MailService } from '../../mail/mail.service';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { SojebStorage } from '../../common/lib/Disk/SojebStorage';
+import { SazzadStorage } from '../../common/lib/Disk/SazzadStorage';
 import { DateHelper } from '../../common/helper/date.helper';
 import { StripePayment } from '../../common/lib/Payment/stripe/StripePayment';
 import { StringHelper } from '../../common/helper/string.helper';
@@ -25,7 +25,7 @@ export class AuthService {
     private userRepository: UserRepository,
     private ucodeRepository: UcodeRepository,
     @InjectRedis() private readonly redis: Redis,
-  ) {}
+  ) { }
 
   async me(userId: string) {
     try {
@@ -55,7 +55,7 @@ export class AuthService {
       }
 
       if (user.avatar) {
-        user['avatar_url'] = SojebStorage.url(
+        user['avatar_url'] = SazzadStorage.url(
           appConfig().storageUrl.avatar + user.avatar,
         );
       }
@@ -129,14 +129,14 @@ export class AuthService {
           select: { avatar: true },
         });
         if (oldImage.avatar) {
-          await SojebStorage.delete(
+          await SazzadStorage.delete(
             appConfig().storageUrl.avatar + oldImage.avatar,
           );
         }
 
         // upload file
         const fileName = `${StringHelper.randomString()}${image.originalname}`;
-        await SojebStorage.put(
+        await SazzadStorage.put(
           appConfig().storageUrl.avatar + fileName,
           image.buffer,
         );

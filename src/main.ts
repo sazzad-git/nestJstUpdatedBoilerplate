@@ -10,7 +10,7 @@ import { join } from 'path';
 import { AppModule } from './app.module';
 import appConfig from './config/app.config';
 import { CustomExceptionFilter } from './common/exception/custom-exception.filter';
-import { SojebStorage } from './common/lib/Disk/SojebStorage';
+import { SazzadStorage } from './common/lib/Disk/SazzadStorage';
 import { buildSwaggerOptions } from './common/swagger/swagger';
 
 async function bootstrap() {
@@ -53,7 +53,7 @@ async function bootstrap() {
   app.useGlobalFilters(new CustomExceptionFilter());
 
   // storage setup
-  SojebStorage.config({
+  SazzadStorage.config({
     driver: 'local',
     connection: {
       rootUrl: appConfig().storageUrl.rootUrl,
